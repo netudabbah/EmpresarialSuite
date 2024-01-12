@@ -3,22 +3,17 @@ import pandas as pd
 import csv 
 import os.path
 
-if os.path.isfile("./productos.csv"): # Si existe el programa, con los headers incluidos
-    df = pd.read_csv("productos.csv") # Nada mas hay a hacerlo dataframe 
-
-else: # pero si no existe aún
-    with open("productos.csv", "w", newline="") as file: # lo creamos con los headers
-        writer = csv.writer(file)
-        writer.writerow(["Articulo", "Cantidad", "Costo", "Precio", "Observaciones"])
-    df = pd.read_csv("productos.csv")
-
 print("°°°Bienvenido a empresa fantasma 123.")
 
-
 def main():
-    empezar()
+    if os.path.isfile("./productos.csv"): # Si existe el programa, con los headers incluidos
+        df = pd.read_csv("productos.csv") # Nada mas hay a hacerlo dataframe 
 
-def empezar(): 
+    else: # pero si no existe aún
+        with open("productos.csv", "w", newline="") as file: # lo creamos con los headers
+            writer = csv.writer(file)
+            writer.writerow(["Articulo", "Cantidad", "Costo", "Precio", "Observaciones"])
+        df = pd.read_csv("productos.csv")
     lista_entera, _ =  activador()
     while True:
         i = input(
@@ -147,7 +142,7 @@ Indique número: """
         
 
 def modificar_producto():
-    lista_entera, solo_articulos =  activador()
+    _ , solo_articulos =  activador()
     # MODIFICAR EXISTENTE
     if not df.empty: # Si no esta vacío
         while True:
