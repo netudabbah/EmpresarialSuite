@@ -3,21 +3,20 @@ import pandas as pd
 import csv 
 import os.path
 
-if os.path.isfile("./clientes.csv"): #CORRECTO
-    df = pd.read_csv("clientes.csv") 
 
-else: # pero si no existe aún
-    with open("clientes.csv", "w", newline="") as file: # lo creamos con los headers
-        writer = csv.writer(file)
-        writer.writerow(["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "Observaciones"])
-    df = pd.read_csv("clientes.csv")
 
 print("Bienvenido a empresa fantasma 1234")
 
 def main():
-    empezar()
+    if os.path.isfile("./clientes.csv"): #CORRECTO
+        df = pd.read_csv("clientes.csv") 
 
-def empezar(): # CORRRECTO
+    else: # pero si no existe aún
+        with open("clientes.csv", "w", newline="") as file: # lo creamos con los headers
+            writer = csv.writer(file)
+            writer.writerow(["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "Observaciones"])
+        df = pd.read_csv("clientes.csv")
+
     lista_entera, _ =  activador()
     while True:
         i = input(
