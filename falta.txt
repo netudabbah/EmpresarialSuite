@@ -1,0 +1,18 @@
+1. 
+
+if os.path.isfile("./productos.csv"): # Si existe el programa, con los headers incluidos
+    df = pd.read_csv("productos.csv") # Nada mas hay a hacerlo dataframe 
+
+else:  # modificar acá
+    with open("productos.csv", "w", newline="") as file: # lo creamos con los headers
+        writer = csv.writer(file)
+        writer.writerow(["Articulo", "Cantidad", "Costo", "Precio", "Observaciones"])
+    df = pd.read_csv("productos.csv")
+
+pero haciendo todo con pandas
+
+
+3. 
+Chequear q el file no este vacio! (df.empty)
+
+4.

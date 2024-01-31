@@ -29,9 +29,7 @@ print("°°°Bienvenido a empresa fantasma 123.")
 def main():
     print("\033[92mHOME\033[0m\n")
     df = pd.read_csv("productos.csv") 
-    # la idea aca es actualizar el df en caso
-    # que despues de modificar/agregar mande a volver()
-    lista_entera, _ =  activador()
+    lista_entera, _ =  activador(df)
     while True:
         i = input(
 "1. Ver/Modificar lista de productos\n" 
@@ -39,7 +37,7 @@ def main():
 "Indique número: ").strip()              
         if i == "1":
             if not df.empty:
-                print("\nLista actual:\n", tabulate(lista_entera, headers="keys", tablefmt="fancy_grid"), sep="")
+                print("\nLista actual:\n", tabulate(lista_entera, headers="keys", tablefmt="fancy_grid", showindex="never"), sep="")
                 while True:
                     que_hacer = input("Desea modificar algo de la lista?\n1. Si\n2. No\nIndique número: ").strip()
                     if que_hacer == "1":
@@ -73,14 +71,9 @@ def main():
             continue
         break
 
-def activador():
-    solo_articulos = []
-    lista_entera = []
-    with open("productos.csv", encoding='utf-8') as file:
-        reader = csv.DictReader(file) # modificar
-        for i in reader:
-            solo_articulos.append(i['Articulo'])
-            lista_entera.append(i) 
+def activador(df):
+    lista_entera = df.loc[:]
+    solo_articulos = df.loc[:, ["Articulo"]].values
     return lista_entera, solo_articulos
 
 def agregar_producto():
