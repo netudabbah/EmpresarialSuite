@@ -15,4 +15,46 @@ pero haciendo todo con pandas
 3. 
 Chequear q el file no este vacio! (df.empty)
 
-4.
+4. 
+    en guardar_pedido(cliente, articulo, cantidad): (borrador.py)
+
+    agregar una casilla de estatus, que entienda si el pedido esta pago o no, y q escriba acorde a eso; 
+    pagado o pendiente de pego, ponele.
+
+def pedir_cliente(solo_clientes): # pide nuevo cliente
+    print("\n\033[92mNUEVO CLIENTE\033[0m\n")
+    while True:
+        nnombre = input("Nombre del cliente: ").title().strip()
+        if nnombre == "":
+            print("\n\033[91mERROR\033[0m: Ponga un nombre válido\n")
+            continue
+        if nnombre in solo_articulos:
+            esta = input(f"""
+\033[91mATENCIÓN\033[0m
+{nnombre} ya está en la lista.
+
+Para modificar el existente, oprima 1.
+Para ir al menu inicial, oprima 2
+Para finalizar, cualquier otra tecla
+
+Número: """
+).strip()
+            if esta == "1":
+                print("Modificar")
+                break
+            elif esta == "2":
+                main() 
+                break  
+            else:
+                print("Se canceló la operación.")
+                return None
+        razon_social = input("Razon social: ").title().strip()
+        cuenta_corriente = 0
+        observaciones = input("Escriba observaciones si las hay, si no, enter: ") 
+
+def agregar_producto(df, nnombre, razon_social, cuenta_corriente, observaciones=None):
+    data = pd.DataFrame([[nnombre, razon_social, cuenta_corriente observaciones]],
+                        columns=["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "Observaciones"])
+    
+    combino = pd.concat([df, data], ignore_index=True)
+    combino.to_csv("clientes.csv", index=False)

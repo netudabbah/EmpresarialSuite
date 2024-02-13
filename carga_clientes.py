@@ -1,5 +1,5 @@
 """
-migrar main.py
+Interactua con clientes.csv, carga nuevos clientes y modifica datos 
 
 """
 from tabulate import tabulate 
@@ -23,7 +23,7 @@ print("Bienvenido a empresa fantasma 1234")
 def main(): # igual
     print("\n\033[92mHOME\033[0m\n")
     df = pd.read_csv("clientes.csv") 
-    lista_entera, _ =  activador()
+    lista_entera, solo_clientes =  activador(df)
     while True:
         i = input(
 "1. Ver/Modificar lista de clientes\n" 
@@ -35,7 +35,7 @@ def main(): # igual
                 while True:
                     que_hacer = input("Desea modificar algo de la lista?\n1. Si\n2. No\nIndique número: ").strip()
                     if que_hacer == "1":
-                        modificar_lista()
+                        modificar_lista(df, solo_clientes)
                         break
                     elif que_hacer == "2":
                         print("Programa finalizado con éxito.")
@@ -49,7 +49,10 @@ def main(): # igual
                 while True:
                     x = input("1. Para agregar un cliente \n2. Para salir\nIndique número: ").strip()  
                     if x == "1":
-                        agregar_cliente()
+                        nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones = pedir_cliente(solo_clientes)
+                        agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones)
+                        mostrar_lista(lista_entera)
+                        ifna_fillna(df)
                         break
                     elif x == 2:
                         print("Programa finalizado sin cambios.")
@@ -67,57 +70,54 @@ def main(): # igual
             continue
         break
 
-def activador(): # igual
-    solo_clientes = []
-    lista_entera = []
-    with open("clientes.csv", encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for i in reader:
-            solo_clientes.append(i['Cliente']) # q pasa si tengo un julian de aca y otro de alla?
-            lista_entera.append(i) 
+def activador(df):
+    lista_entera = df.loc[:]
+    solo_clientes = df.loc[:, ["Cliente"]].values
     return lista_entera, solo_clientes
 
-def agregar_cliente(): # igual
-    lista_entera, solo_clientes = activador()
+def pedir_cliente(solo_clientes): # pide nuevo cliente
+    print("\n\033[92mNUEVO CLIENTE\033[0m\n")
     while True:
-        cliente = input("Nombre del cliente: ").title().strip()
-        if cliente == "":
-            print("\n\033[91mERROR\033[0m: Ponga un nombre válido")
+        nnombre = input("Nombre del cliente: ").title().strip()
+        if nnombre == "":
+            print("\n\033[91mERROR\033[0m: Ponga un nombre válido\n")
             continue
-        if cliente in solo_clientes:
+        if nnombre in solo_clientes:
             esta = input(f"""
-\n\033[91mATENCIÓN\033[0m
-{cliente} ya está en la lista.
-Para modificar el existente, oprima 1.
-Para ir al menú inicial, oprima 2
-Para finalizar, oprima cualquier otra tecla
+\033[91mATENCIÓN\033[0m
+{nnombre} ya está en la lista.
+1. Para modificar el existente.
+2. Para ir al menu inicial.
+Para finalizar, cualquier otra tecla.
 
 Número: """
 ).strip()
             if esta == "1":
-                modificar_cliente()
+                modificar_cliente(df, nnombre)
                 break
             elif esta == "2":
-                main()
-                break
+                main() 
+                break  
             else:
                 print("Se canceló la operación.")
-                break
+                return None
         razon_social = input("Razon social: ").title().strip()
         cuenta_corriente = 0
-        observaciones = input("Escriba observaciones si las hay, si no, enter: ")        
-        with open("clientes.csv", "a", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow([cliente, razon_social, cuenta_corriente, "", observaciones])
-        lista_entera, _ = activador()
-        mostrar_lista(lista_entera)
-        print("✅ Operación exitosa, good evening")
-        break
+        observaciones = input("Escriba observaciones si las hay, si no, enter: ") 
+        ultima_compra = "---"
+        ifna_fillna(df)
+        return nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones
+    
+def agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones=None):
+    data = pd.DataFrame([[nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones]],
+                        columns=["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "Observaciones"])
+    
+    combino = pd.concat([df, data], ignore_index=True)
+    ifna_fillna(df)
+    combino.to_csv("clientes.csv", index=False)
 
-
-def modificar_lista(): # igual
-    global df 
-    print("\nMenu:")
+def modificar_lista(df, solo_clientes): # igual
+    print("\n\033[92mSección: Modificar lista de clientes\033[0m")
     while True:
         s = input("""
 1. Agregar cliente
@@ -126,10 +126,11 @@ def modificar_lista(): # igual
 Indique número: """
     ).strip()
         if s == "1":
-            agregar_cliente()
-
+            nnombre, razon_social, cuenta_corriente, observaciones = pedir_cliente(solo_clientes)
+            agregar_cliente(nnombre, razon_social, cuenta_corriente, observaciones)
+            mostrar_lista(df)
         elif s == "2":
-            modificar_cliente()
+            modificar_cliente(df)
        
         elif s == "3":
                 print("✅ Operación finalizada con éxito")    
@@ -140,16 +141,15 @@ Indique número: """
         break
 
 
-def modificar_cliente(): # igual
-    _, solo_clientes =  activador()
+def modificar_cliente(df, cliente=None): # igual
+    _, solo_clientes =  activador(df)
     while True:
-        cliente = input("\nIndique el cliente que quiere modificar (escriba salir si no es necesario): ").strip().title()
-        if "salir" in cliente.lower():
-            print("Operación finalizada con \033[92méxito\033[0m")
-            break 
-        if cliente not in solo_clientes: # chequeo que sea un producto existente
-            print("\n\033[91mERROR\033[0m: Escriba un cliente de la lista")
-            continue
+        if cliente is None:
+            cliente = input("\nIndique el cliente que quiere modificar: ").strip().title()
+            if cliente not in solo_clientes: # chequeo que sea un producto existente
+                print("\n\033[91mERROR\033[0m: Escriba un cliente de la lista")
+                cliente = None
+                continue
         while True:
             x = input(
                 """
@@ -161,19 +161,20 @@ def modificar_cliente(): # igual
 \nIndique número: """
 ).strip()
             if x == "1":
-                cambiar_nombre(cliente)                  
+                cambiar_nombre(df, cliente)                  
                 break
             
             elif x == "2":
-                cambiar_r_social(cliente)
+                cambiar_r_social(df, cliente)
                 break
 
             elif x == "3":
-                eliminar(cliente)            
+                eliminar(df, cliente)            
                 break
 
             elif x == "4": 
-                editar_observacion(cliente)
+                editar_observacion(df, cliente)
+                ifna_fillna(df)
                 break
             
             elif x == "5":
@@ -185,9 +186,8 @@ def modificar_cliente(): # igual
         break
 
 
-def cambiar_nombre(cliente): # igual
-    global df 
-    print("\n\033[92mSección\033[0m: cambiar nombre del cliente\n")
+def cambiar_nombre(df, cliente): # igual
+    print("\n\033[92mSección\033[0m: editar nombre del cliente\n")
     while True:
         cliente_nuevo = input("Nuevo nombre: ").title().strip()
         if cliente_nuevo == "":
@@ -196,13 +196,12 @@ def cambiar_nombre(cliente): # igual
         break
     df.loc[df["Cliente"] == cliente, "Cliente"] = cliente_nuevo
     df.to_csv("clientes.csv", index=False)
-    lista_entera, _ = activador() # para actualizar la lista y poder escribirla
+    lista_entera, _ = activador(df) # para actualizar la lista y poder mostrarla
     mostrar_lista(lista_entera) 
     print("✅ Operación exitosa. Que andes bien. ")
-    volver()
+    
 
-def cambiar_r_social(cliente): # igual
-    global df
+def cambiar_r_social(df, cliente): # igual
     print("\n\033[92mSección\033[0m: editar razón social\n")
     while True:
         r_social = input("Nueva razón social: ").title().strip()
@@ -215,59 +214,47 @@ def cambiar_r_social(cliente): # igual
     lista_entera, _ = activador() # para actualizar la lista y poder escribirla
     mostrar_lista(lista_entera) 
     print("✅ Operación exitosa. Que andes bien. ")
-    volver()
+    
 
-def eliminar(cliente): # igual
-    global df
+def eliminar(df, cliente): # igual 
     print("\n\033[92mSección\033[0m: eliminar articulo\n")
     i = input("Presione 1 para confirmar elección, tenga en cuenta que no hay vuelta atrás: ").strip()
     if i == "1":
         df = df[df["Cliente"] != cliente]
         df.to_csv("clientes.csv", index=False)    
-        lista_entera, _ = activador() # para actualizar la lista y poder escribirla
+        lista_entera, _ = activador(df) # para actualizar la lista y poder escribirla
         mostrar_lista(lista_entera) 
         print("✅ Operación exitosa. Que andes bien. ")
     else:
         print("✅ Se canceló la eliminación.")
-    volver()
+    
 
 
-def editar_observacion(cliente): # igual
-    global df
+def editar_observacion(df, cliente): # igual
     print("\n\033[92mSección\033[0m: cambiar observación del cliente\n")
     obs = input("Nueva observación (enter para eliminar la actual): ")
     if obs == "":
-        df.loc[df["Cliente"] == cliente, "Observaciones"] = None
+        df.loc[df["Cliente"] == cliente, "Observaciones"] = "---"
     else: 
         df.loc[df["Cliente"] == cliente, "Observaciones"] = obs
     df.to_csv("clientes.csv", index=False)
-    lista_entera, _ = activador() # para actualizar la lista y poder escribirla
+    lista_entera, _ = activador(df) # para actualizar la lista y poder escribirla
     mostrar_lista(lista_entera) 
     print("✅ Operación exitosa. Que andes bien. ")
-    volver()
+ 
 
 
 def mostrar_lista(lista_entera):
-    print(tabulate(lista_entera, headers="keys", tablefmt="fancy_grid"))
+    df = pd.read_csv("clientes.csv")
+    lista_entera, _ = activador(df)
+    print("Lista actual:\n", tabulate(lista_entera, headers="keys", tablefmt="fancy_grid"))
 
 
-def volver():
-    while True:
+def ifna_fillna(df):
+    if df["Observaciones"].isna().any():
+        df.fillna("---", inplace=True)
+        df.to_csv("clientes.csv", index=False)
 
-        x = input(
-"\nDesea hacer algo mas?\n"
-"Para ir al menú inicial, oprima 1\n"
-"Para finalizar, oprima 2\n"
-"Su elección: "
-).strip()
-        if x == "1":
-            main()
-            break
-        elif x == "2":
-            break
-        else:
-            print("ERROR: Indique una de las opciones")
-            continue
 
 
 if __name__ == "__main__":

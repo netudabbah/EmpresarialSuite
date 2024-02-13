@@ -16,11 +16,13 @@ def main():
     df = pd.read_csv("productos.csv")
     lista_entera, solo_articulos = activador(df)
     while True:
+        if chequear_df(df, solo_articulos):
+            lista_entera, solo_articulos = activador(df)
+            break
         i = input(
 "1. Ver/Modificar lista de productos\n" 
 "2. Finalizar programa\n"
 "Indique número: ").strip()
-        chequear_df(df, solo_articulos)
         if i == "1":
             print(tabulate(lista_entera, headers="keys", showindex=False, tablefmt="fancy_grid"))
             while True:
@@ -147,6 +149,7 @@ Su elección: """
             print("Esriba su eleccion")
             continue
         break
+    
     print(f"Lista actual:\n{tabulate(lista_entera, headers='keys', showindex=False,tablefmt='fancy_grid')}")
 
 def chequear_df(df, solo_articulos):
@@ -161,11 +164,19 @@ Su elección: """
 )
                 if i == "1":
                     nnombre, cantidad, costo, precio_final, observaciones = pedir_producto(solo_articulos)
-                    agregar_producto(nnombre, cantidad, costo, precio_final, observaciones)
+                    agregar_producto(df, nnombre, cantidad, costo, precio_final, observaciones)
                     df = pd.read_csv("productos.csv")
                     ifna_fillna(df)
+                    return True
+                else:
+                    break
+                
+
+                
+
 
 def activador(df):
+    df = pd.read_csv("productos.csv")
     lista_entera = df.loc[:]
     solo_articulos = df.loc[:, ["Articulo"]].values
     return lista_entera, solo_articulos

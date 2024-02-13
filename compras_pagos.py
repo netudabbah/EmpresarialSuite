@@ -1,23 +1,38 @@
+"""
+Carga pedidos de clientes y pagos.
+
+Funciones: 
+    cargar_pedido(cliente)
+
+    restar_cantidad(compra, cantidad)
+    En la columna cantidad de productos.csv, resta el numero de articulos que compró
+
+    sumar_a_cuenntacorrientecompra, cantidad, cliente):
+    En la columna cuenta corriente de clientes.csv, suma el monto de la compra
+
+    poner_fecha(cliente):
+    En la columna Ultima compra del cliente, pone la fecha del dia
+
+    
+    cargar_pago(cliente):
+    En la columna cuenta corriente del cliente, suma el monto pagado
+
+    guardar_pedido(cliente, articulo, cantidad):
+    Arma un nuevo csv, de no existir, o lo modifica, agregando 3 simples columnas: cliente,articulo,cantidad
+ 
+
+"""
+
 import pandas as pd
 from datetime import date
 from tabulate import tabulate
-
+import os
 
 df_productos = pd.read_csv("productos.csv")
-
 df_clientes = pd.read_csv("clientes.csv")
 
-"""
-Esta proxima parte, de complementarse el programa a main,
-quedarian en vano ya que ya lo hice allá.
-"""
-
-# Busco en el df q sea la columna y me la devuelve como lista, con values para sacar el index
 lista_productos = df_productos.loc[:,["Articulo", "Precio"]].values
-
-
 lista_clientes = df_clientes.loc[:, "Cliente"].values
-
 
 def main():
     while True:
@@ -27,13 +42,12 @@ def main():
             continue
         break
     while True:
-        i = input( """
+        i = input("""
 Que desea hacer?\n 
 1. Para cargar un nuevo pedido
 2. Para cargar un nuevo pago
 3. Para cambiar de cliente
-Indique: """
-)
+Indique: """)
         if i == "1":
             cargar_pedido(cliente)
             break
@@ -47,10 +61,8 @@ Indique: """
             continue
         break
 
-
 def cargar_pedido(cliente):
     print(f"Sección: Cargar pedido al cliente {cliente}\n")
-
     print(tabulate(lista_productos, headers=["Articulo", "Precio"]))
 
     while True:
@@ -63,13 +75,12 @@ def cargar_pedido(cliente):
             x = input("""
 Para elegir otro producto, presione 1
 Para salir, presione cualquier otra tecla.
-Indique: """
-)
+Indique: """)
             if x == "1":
                 print("Volviendo a home")
                 main()
             else:
-                print("Sesión cerrada.") 
+                print("Sesión cerrada.")
                 break
         else: # esta en la lista y hay stock     
             while True:
@@ -83,19 +94,18 @@ Indique: """
                     continue
 
                 restar_cantidad(compra, cantidad)
-                sumar_a_razonsocial(compra, cantidad, cliente)
+                sumar_a_cuentacorriente(compra, cantidad, cliente)
                 poner_fecha(cliente)
+                guardar_pedido(cliente, compra, cantidad)  
                 print("Pedido cargado con éxito.")
                 break
         break
-
-    
 
 def restar_cantidad(compra, cantidad):
     df_productos.loc[df_productos["Articulo"] == compra, "Cantidad"] -= cantidad
     df_productos.to_csv("productos.csv", index=False)
 
-def sumar_a_razonsocial(compra, cantidad, cliente):
+def sumar_a_cuentacorriente(compra, cantidad, cliente):
     total = df_productos.loc[df_productos["Articulo"] == compra, "Precio"] * cantidad
     df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"] += total.values
     df_clientes.to_csv("clientes.csv", index=False)
@@ -104,12 +114,11 @@ def poner_fecha(cliente):
     df_clientes.loc[df_clientes["Cliente"] == cliente, "Ultima compra"] = date.today()
     df_clientes.to_csv("clientes.csv", index=False)
 
-
 def cargar_pago(cliente):
     print("Sección cargar pago\n")
     cuenta_corriente = df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"].values
     while True:
-        print(f"Deuda actual: {cuenta_corriente[0]}") 
+        print(f"Deuda actual: {cuenta_corriente[0]}")
         try:
             pago = float(input("Pago: "))
         except ValueError:
@@ -121,13 +130,17 @@ def cargar_pago(cliente):
     cuenta_corriente = df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"].values
     if cuenta_corriente == 0:
         print(f"Cuenta cancelada. Slds")
-    
     elif cuenta_corriente < 0:
         print(f"Cuenta cancelada. Con {round(cuenta_corriente[0], 2)} a favor de {cliente}")
-
     else:
         print(f"A cuenta: {cuenta_corriente[0]}")
 
-    
+def guardar_pedido(cliente, articulo, cantidad):
+    pedido_data = {'Cliente': [cliente], 'Articulo': [articulo], 'Cantidad': [cantidad]}
+    df_pedido = pd.DataFrame(pedido_data)
+    if not os.path.isfile('pedidos.csv'):
+        df_pedido.to_csv('pedidos.csv', index=False)
+    else:
+        df_pedido.to_csv('pedidos.csv', mode='a', header=False, index=False)
 
 main()
