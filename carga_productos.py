@@ -45,7 +45,6 @@ Su elección: """
                         nnombre, cantidad, costo, precio_final, observaciones = pedir_producto(solo_articulos)
                         agregar_producto(df, nnombre, cantidad, costo, precio_final, observaciones)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
                     
@@ -66,12 +65,11 @@ Su elección: """
                             break
                         editar_nombre(df, producto, n_nuevo)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
 
                     elif m == "3":
-                        print("Seccion: Editar cantidad")
+                        print("\n\033[92mEditar cantidad\033[0m\n")
                         while True:
                             try:
                                 n_cant = int(input("Nueva cantidad: "))
@@ -80,7 +78,6 @@ Su elección: """
                             break
                         editar_cantidad(df, producto, n_cant)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
 
@@ -94,7 +91,6 @@ Su elección: """
                             break
                         editar_costo(df, producto, n_costo)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
                     
@@ -108,23 +104,22 @@ Su elección: """
                             break
                         editar_precio(df, producto, n_precio)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
                     
                     elif m == "6":
                         print(producto)
-                        n_o = input("Nueva observación (presionando enter elimina la actual si es que hay): ").strip()
-                        editar_observacion(df, producto, n_o)
+                        nueva_obs = input("Nueva observación (presionando enter elimina la actual si es que hay): ").strip()
+                        if nueva_obs == "":
+                            nueva_obs = "---"
+                        editar_observacion(df, producto, nueva_obs)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
                     
                     elif m == "7":
                         eliminar(df, producto)
                         df = pd.read_csv("productos.csv")
-                        ifna_fillna(df)
                         lista_entera, solo_articulos = activador(df)
                         break
                     
@@ -166,7 +161,6 @@ Su elección: """
                     nnombre, cantidad, costo, precio_final, observaciones = pedir_producto(solo_articulos)
                     agregar_producto(df, nnombre, cantidad, costo, precio_final, observaciones)
                     df = pd.read_csv("productos.csv")
-                    ifna_fillna(df)
                     return True
                 else:
                     break
@@ -176,7 +170,6 @@ Su elección: """
 
 
 def activador(df):
-    df = pd.read_csv("productos.csv")
     lista_entera = df.loc[:]
     solo_articulos = df.loc[:, ["Articulo"]].values
     return lista_entera, solo_articulos
@@ -231,19 +224,16 @@ Número: """
                 continue
             break
         observaciones = input("Escriba observaciones si las hay, si no, enter: ")
+        if observaciones == "":
+            observaciones = "---"
         return nnombre, cantidad, costo, precio_final, observaciones
 
-def agregar_producto(df, nnombre, cantidad, costo, precio_final, observaciones=None):
+def agregar_producto(df, nnombre, cantidad, costo, precio_final, observaciones):
     data = pd.DataFrame([[nnombre, cantidad, costo, precio_final, observaciones]],
                         columns=["Articulo", "Cantidad", "Costo", "Precio", "Observaciones"])
     
     combino = pd.concat([df, data], ignore_index=True)
     combino.to_csv("productos.csv", index=False)
-
-def ifna_fillna(df):
-    if df.loc[:, "Observaciones"].isna().any():
-        df.fillna("---", inplace=True)
-        df.to_csv("productos.csv", index=False)
 
 
 def editar_nombre(df, viejo, nuevo):
@@ -252,7 +242,6 @@ def editar_nombre(df, viejo, nuevo):
     df.to_csv("productos.csv", index=False)
 
 def editar_cantidad(df, producto, n_cant):
-    print("\n\033[92mSección\033[0m: editar cantidad del articulo\n")
     df.loc[df["Articulo"] == producto, "Cantidad"] = n_cant
     df.to_csv("productos.csv", index=False)
 
@@ -263,7 +252,6 @@ def editar_costo(df, producto, n_costo):
 
 def editar_precio(df, producto, n_precio):
     print("\n\033[92mSección\033[0m: editar precio del articulo\n")
-    print(f"Precio actual: {df.loc[df['Articulo'] == producto, 'Costo']}")
     df.loc[df["Articulo"] == producto, "Precio"] = n_precio
     df.to_csv("productos.csv", index=False)
 

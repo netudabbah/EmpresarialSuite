@@ -7,7 +7,7 @@ Funciones:
     restar_cantidad(compra, cantidad)
     En la columna cantidad de productos.csv, resta el numero de articulos que compró
 
-    sumar_a_cuenntacorrientecompra, cantidad, cliente):
+    sumar_a_cuenntacorriente(compra, cantidad, cliente):
     En la columna cuenta corriente de clientes.csv, suma el monto de la compra
 
     poner_fecha(cliente):

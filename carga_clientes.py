@@ -31,7 +31,7 @@ def main(): # igual
 "Indique número: ").strip()              
         if i == "1":
             if not df.empty:
-                print("\nLista actual:\n", tabulate(lista_entera, headers="keys", tablefmt="fancy_grid"), sep="")
+                print("\nLista actual:\n", tabulate(lista_entera, headers="keys", tablefmt="fancy_grid", showindex=False), sep="")
                 while True:
                     que_hacer = input("Desea modificar algo de la lista?\n1. Si\n2. No\nIndique número: ").strip()
                     if que_hacer == "1":
@@ -52,9 +52,8 @@ def main(): # igual
                         nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones = pedir_cliente(solo_clientes)
                         agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones)
                         mostrar_lista(lista_entera)
-                        ifna_fillna(df)
                         break
-                    elif x == 2:
+                    elif x == "2":
                         print("Programa finalizado sin cambios.")
                         break
                     else:
@@ -101,19 +100,25 @@ Número: """
             else:
                 print("Se canceló la operación.")
                 return None
-        razon_social = input("Razon social: ").title().strip()
+        while True:
+            razon_social = input("Razon social: ").title().strip()
+            if razon_social == "":
+                print("\033[91mERROR\033[0m: Indique una razon social válida.")
+                continue
+            break
         cuenta_corriente = 0
-        observaciones = input("Escriba observaciones si las hay, si no, enter: ") 
+        observaciones = input("Escriba observaciones si las hay, si no, enter: ")
+        if observaciones == "":
+            observaciones = "---"
         ultima_compra = "---"
-        ifna_fillna(df)
         return nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones
     
 def agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones=None):
     data = pd.DataFrame([[nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones]],
                         columns=["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "Observaciones"])
-    
+
     combino = pd.concat([df, data], ignore_index=True)
-    ifna_fillna(df)
+
     combino.to_csv("clientes.csv", index=False)
 
 def modificar_lista(df, solo_clientes): # igual
@@ -126,9 +131,10 @@ def modificar_lista(df, solo_clientes): # igual
 Indique número: """
     ).strip()
         if s == "1":
-            nnombre, razon_social, cuenta_corriente, observaciones = pedir_cliente(solo_clientes)
-            agregar_cliente(nnombre, razon_social, cuenta_corriente, observaciones)
-            mostrar_lista(df)
+            nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones = pedir_cliente(solo_clientes)
+            agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones)
+            lista_entera, _ = activador(df)
+            mostrar_lista(lista_entera)
         elif s == "2":
             modificar_cliente(df)
        
@@ -153,8 +159,8 @@ def modificar_cliente(df, cliente=None): # igual
         while True:
             x = input(
                 """
-1) Cambiar nombre cliente
-2) Cambiar razón social
+1) Editar nombre cliente
+2) Editar razón social
 3) Eliminar cliente
 4) Editar observación
 5) Finalizar programa
@@ -174,7 +180,6 @@ def modificar_cliente(df, cliente=None): # igual
 
             elif x == "4": 
                 editar_observacion(df, cliente)
-                ifna_fillna(df)
                 break
             
             elif x == "5":
@@ -194,8 +199,11 @@ def cambiar_nombre(df, cliente): # igual
             print("\n\033[91mERROR\033[0m: Escriba un nombre válido")
             continue
         break
-    df.loc[df["Cliente"] == cliente, "Cliente"] = cliente_nuevo
-    df.to_csv("clientes.csv", index=False)
+    if cliente_nuevo != cliente:
+            df.loc[df["Cliente"] == cliente, "Cliente"] = cliente_nuevo
+            df.to_csv("clientes.csv", index=False)
+    else: 
+        print("\033[93mAtención\033[0m: El nombre insertado es igual al antiguo, por lo tanto no habrá un cambio efectuado")
     lista_entera, _ = activador(df) # para actualizar la lista y poder mostrarla
     mostrar_lista(lista_entera) 
     print("✅ Operación exitosa. Que andes bien. ")
@@ -211,7 +219,7 @@ def cambiar_r_social(df, cliente): # igual
         break
     df.loc[df["Cliente"] == cliente, "Razon social"] = r_social
     df.to_csv("clientes.csv", index=False)
-    lista_entera, _ = activador() # para actualizar la lista y poder escribirla
+    lista_entera, _ = activador(df) # para actualizar la lista y poder escribirla
     mostrar_lista(lista_entera) 
     print("✅ Operación exitosa. Que andes bien. ")
     
@@ -231,7 +239,7 @@ def eliminar(df, cliente): # igual
 
 
 def editar_observacion(df, cliente): # igual
-    print("\n\033[92mSección\033[0m: cambiar observación del cliente\n")
+    print("\n\033[92mSección\033[0m: Editar observación del cliente\n")
     obs = input("Nueva observación (enter para eliminar la actual): ")
     if obs == "":
         df.loc[df["Cliente"] == cliente, "Observaciones"] = "---"
@@ -247,14 +255,7 @@ def editar_observacion(df, cliente): # igual
 def mostrar_lista(lista_entera):
     df = pd.read_csv("clientes.csv")
     lista_entera, _ = activador(df)
-    print("Lista actual:\n", tabulate(lista_entera, headers="keys", tablefmt="fancy_grid"))
-
-
-def ifna_fillna(df):
-    if df["Observaciones"].isna().any():
-        df.fillna("---", inplace=True)
-        df.to_csv("clientes.csv", index=False)
-
+    print(f"Lista actual:\n{tabulate(lista_entera, headers='keys', tablefmt='fancy_grid', showindex=False)}")
 
 
 if __name__ == "__main__":
