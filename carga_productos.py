@@ -1,6 +1,7 @@
 import pandas as pd
 from tabulate import tabulate
 import os.path
+import sys
 
 if os.path.isfile("./productos.csv"): # Si existe el programa, con los headers incluidos
     df = pd.read_csv("productos.csv")
@@ -52,7 +53,7 @@ Su elección: """
                         while True:
                             producto = input("Nombre del producto: ").title().strip()
                             if producto not in solo_articulos:
-                                print("No esta eso bola")
+                                print("Por favor, indique un articulo de la lista")
                                 continue
                             break
                     
@@ -131,7 +132,7 @@ Su elección: """
                         print("Error: Elija una de las opciones dadas.")
                         continue
                 except ValueError:
-                    print("Please, type in an integer.")
+                    print("Por favor, indique un numero.")
                     continue
 
                  
@@ -163,10 +164,9 @@ Su elección: """
                     df = pd.read_csv("productos.csv")
                     return True
                 else:
-                    break
+                    return sys.exit()
                 
 
-                
 
 
 def activador(df):

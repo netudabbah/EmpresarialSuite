@@ -115,25 +115,28 @@ def poner_fecha(cliente):
     df_clientes.to_csv("clientes.csv", index=False)
 
 def cargar_pago(cliente):
-    print("Sección cargar pago\n")
+    print("\033[92mSección cargar pago\n\033[0m")
     cuenta_corriente = df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"].values
-    while True:
-        print(f"Deuda actual: {cuenta_corriente[0]}")
-        try:
-            pago = float(input("Pago: "))
-        except ValueError:
-            print("\nEspecificar pago en números\n")
-            continue
-        break
-    df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"] -= pago
-    df_clientes.to_csv("clientes.csv", index=False, float_format="%.2f")
-    cuenta_corriente = df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"].values
-    if cuenta_corriente == 0:
-        print(f"Cuenta cancelada. Slds")
-    elif cuenta_corriente < 0:
-        print(f"Cuenta cancelada. Con {round(cuenta_corriente[0], 2)} a favor de {cliente}")
-    else:
-        print(f"A cuenta: {cuenta_corriente[0]}")
+    if cuenta_corriente != 0:
+        while True:
+            print(f"Deuda actual: {cuenta_corriente[0]}")
+            try:
+                pago = float(input("Pago: "))
+            except ValueError:
+                print("\033[91mERROR\033[0m Especificar pago en números\n")
+                continue
+            break
+        df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"] -= pago
+        df_clientes.to_csv("clientes.csv", index=False, float_format="%.2f")
+        cuenta_corriente = df_clientes.loc[df_clientes["Cliente"] == cliente, "Cuenta corriente"].values
+        if cuenta_corriente == 0:
+            print(f"Cuenta cancelada.")
+        elif cuenta_corriente < 0:
+            print(f"Cuenta cancelada. Con {round(cuenta_corriente[0], 2)} a favor de {cliente}")
+        else:
+            print(f"A cuenta: {round(cuenta_corriente[0], 2)}")
+    else: 
+        print("No hay deudas a pagar.")
 
 def guardar_pedido(cliente, articulo, cantidad):
     pedido_data = {'Cliente': [cliente], 'Articulo': [articulo], 'Cantidad': [cantidad]}
