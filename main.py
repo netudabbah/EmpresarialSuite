@@ -6,7 +6,10 @@ import os.path
 import sys
 from datetime import date
 import warnings
-
+from email.message import EmailMessage
+import smtplib
+import ssl
+from num2words import num2words
 
 warnings.filterwarnings("ignore", message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.*")
 
@@ -35,9 +38,14 @@ def main():
         lista_articulos, solo_articulos = activador_a(articulos_df)        
 
         print("\n\033[92mHOME\033[0m\n")
-        print("1. Gestionar clientes\n2. Gestionar articulos\n3. Finalizar programa")
+        print(
+"""              
+1. Gestionar clientes (cargar pedidos/pagos, modificar/crear clientes)
+2. Gestionar articulos (cargar articulos nuevos, modificar/eliminar existentes)
+3. Finalizar programa
+"""        
+)
         choice = input("\nIndique número: ").strip()
-
         if choice == "1":
             if not clientes_df.empty:
                 gestionar_clientes(lista_clientes, solo_clientes, clientes_df, lista_articulos, solo_articulos, articulos_df)
@@ -47,8 +55,8 @@ def main():
                 while True:
                     i = input("1. Para crear un nuevo cliente\nPresione cualquier otra tecla para salir\nSu eleccion: ").strip()
                     if i == "1":
-                        nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones = pedir_cliente(solo_clientes)
-                        agregar_cliente(clientes_df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones)
+                        nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones = pedir_cliente(solo_clientes)
+                        agregar_cliente(clientes_df, nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones)
                         print("Lista actualizada: ")
                         clientes_df = pd.read_csv("clientes.csv")
                         mostra_c(clientes=clientes_df)
@@ -151,8 +159,6 @@ Eleccion: """
                         continue
                     break
                 cargar_pedido(articulos_df, clientes_df, cliente, articulo, cantidad)
-                pedidos_df = pd.read_csv("pedidos.csv")
-                mostra_c(pedidos=pedidos_df)
 
         elif i == "2": # Pagos
             print("\n\033[92mSección cargar pago\n\033[0m")
@@ -178,8 +184,8 @@ Eleccion: """
                 print(f"A cuenta: {round(cuenta_corriente[0], 2)}")
 
         elif i == "3": # Cliente
-            nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones = pedir_cliente(solo_clientes)
-            agregar_cliente(clientes_df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones)
+            nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones = pedir_cliente(solo_clientes)
+            agregar_cliente(clientes_df, nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones)
             clientes_df = pd.read_csv("clientes.csv")
             print("Lista de clientes actualizada: ")
             mostra_c(clientes=clientes_df)
@@ -200,7 +206,12 @@ Eleccion: """
 2) Editar razón social
 3) Eliminar cliente
 4) Editar observación
-5) Finalizar programa
+5) Editar numero de teléfono
+6) Editar IVA
+7) Editar domicilio
+8) Editar CUIT
+9) Editar mail
+10) Finalizar programa 
 \nIndique número: """
 ).strip()
                 if x == "1":
@@ -220,6 +231,25 @@ Eleccion: """
                     break
                 
                 elif x == "5":
+                    editar_telefono(clientes_df, cliente)
+                    break
+
+                elif x == "6": 
+                    editar_iva(clientes_df, cliente)
+                    break
+
+                elif x == "7":
+                    editar_domicilio(clientes_df, cliente)
+                    break
+
+                elif x == "8":
+                    editar_cuit(clientes_df, cliente)
+                    break
+                
+                elif x == "9":
+                    editar_mail(clientes_df, cliente)   
+                    break
+                elif x == "10":
                     break
 
                 else:
@@ -266,16 +296,41 @@ Número: """
                 print("\033[91mERROR\033[0m: Indique una razon social válida.")
                 continue
             break
+        while True:
+            iva = input("Situacion de IVA: ").strip().title()
+            if iva == "":
+                print("\nIntentelo de nuevo\n")
+                continue
+            break
+        while True:
+            domicilio = input("Domicilio: ").strip().title()
+            if domicilio == "":
+                print("\nIntentelo de nuevo\n")
+                continue
+            break
+        while True:
+            cuit = input("Cuit: ").strip()
+            if cuit == "":
+                print("\nIntentelo de nuevo\n")
+                continue
+            break
+        telefono = input("Telefono: ").strip()
         cuenta_corriente = 0
         observaciones = input("Escriba observaciones si las hay, si no, enter: ")
         if observaciones == "":
             observaciones = "---"
+        while True: # agregar regex!!
+            mail = input("E-mail del cliente: ").strip()
+            if mail == "":
+                print("Por favor, indique un mail valido.")
+                continue
+            break
         ultima_compra = "---"
-        return nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones
+        return nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones
     
-def agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones=None):
-    data = pd.DataFrame([[nnombre, razon_social, cuenta_corriente, ultima_compra, observaciones]],
-                        columns=["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "Observaciones"])
+def agregar_cliente(df, nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones=None):
+    data = pd.DataFrame([[nnombre, razon_social, cuenta_corriente, ultima_compra, iva, domicilio, cuit, telefono, mail, observaciones]],
+                        columns=["Cliente", "Razon social", "Cuenta corriente", "Ultima compra", "IVA", "Domicilio", "CUIT", "Telefono","Mail", "Observaciones"])
     combino = pd.concat([df, data], ignore_index=True)
     combino.to_csv("clientes.csv", index=False)
 
@@ -349,7 +404,77 @@ def editar_observacion(clientes_df, cliente):
     lista_entera, _ = activador_c(clientes_df) # para actualizar la lista y poder escribirla
     mostrar_lista(lista_entera) 
     print("✅ Operación exitosa. Que andes bien. ")
- 
+
+def editar_telefono(clientes_df, cliente): 
+    print("\n\033[92mSección\033[0m: editar número de teléfono\n")
+    while True:
+        tel_nuevo = input("Nuevo teléfono: ").title().strip()
+        if tel_nuevo == "":
+            print("\n\033[91mERROR\033[0m: Número inválido, reintente")
+            continue
+        break
+    clientes_df.loc[clientes_df["Cliente"] == cliente, "Telefono"] = tel_nuevo
+    clientes_df.to_csv("clientes.csv", index=False)
+    lista_entera, _ = activador_c(clientes_df) # para actualizar la lista y poder escribirla
+    mostrar_lista(lista_entera) 
+    print("✅ Operación exitosa. Que andes bien. ")
+
+def editar_iva(clientes_df, cliente):
+    print("\n\033[92mSección\033[0m: editar IVA\n")
+    while True:
+        iva_nuevo = input("Nuevo IVA: ").title().strip()
+        if iva_nuevo == "":
+            print("\n\033[91mERROR\033[0m: Reintente")
+            continue
+        break
+    clientes_df.loc[clientes_df["Cliente"] == cliente, "IVA"] = iva_nuevo
+    clientes_df.to_csv("clientes.csv", index=False)
+    lista_entera, _ = activador_c(clientes_df) # para actualizar la lista y poder escribirla
+    mostrar_lista(lista_entera) 
+    print("✅ Operación exitosa. Que andes bien. ") 
+
+def editar_domicilio(clientes_df, cliente):
+    print("\n\033[92mSección\033[0m: editar domicilio\n")
+    while True:
+        dom_nuevo = input("Nuevo domicilio: ").title().strip()
+        if dom_nuevo == "":
+            print("\n\033[91mERROR\033[0m: Reintente")
+            continue
+        break
+    clientes_df.loc[clientes_df["Cliente"] == cliente, "Domicilio"] = dom_nuevo
+    clientes_df.to_csv("clientes.csv", index=False)
+    lista_entera, _ = activador_c(clientes_df) # para actualizar la lista y poder escribirla
+    mostrar_lista(lista_entera) 
+    print("✅ Operación exitosa. Que andes bien. ")   
+
+def editar_cuit(clientes_df, cliente):
+    print("\n\033[92mSección\033[0m: editar cuit\n")
+    while True:
+        cuit_nuevo = input("Nuevo CUIT: ").title().strip()
+        if cuit_nuevo == "":
+            print("\n\033[91mERROR\033[0m: Reintente")
+            continue
+        break
+    clientes_df.loc[clientes_df["Cliente"] == cliente, "CUIT"] = cuit_nuevo
+    clientes_df.to_csv("clientes.csv", index=False)
+    lista_entera, _ = activador_c(clientes_df) 
+    mostrar_lista(lista_entera) 
+    print("✅ Operación exitosa. Que andes bien. ") 
+
+def editar_mail(clientes_df, cliente):
+    print("\n\033[92mSección\033[0m: editar mail\n")
+    while True:
+        mail_nuevo = input("Nuevo mail: ").title().strip()
+        if mail_nuevo == "":
+            print("\n\033[91mERROR\033[0m: Reintente")
+            continue
+        break
+    clientes_df.loc[clientes_df["Cliente"] == cliente, "Mail"] = mail_nuevo
+    clientes_df.to_csv("clientes.csv", index=False)
+    lista_entera, _ = activador_c(clientes_df) 
+    mostrar_lista(lista_entera) 
+    print("✅ Operación exitosa. Que andes bien. ") 
+
 def mostrar_lista(lista):
     print(tabulate(lista, headers="keys", tablefmt="fancy_grid", showindex=False))
 
@@ -374,8 +499,40 @@ def cargar_pedido(articulos_df, clientes_df, cliente, articulo, cantidad):
     restar_cantidad(articulos_df, articulo, cantidad)
     sumar_a_cuentacorriente(articulos_df, clientes_df, articulo, cantidad, cliente)
     poner_fecha(cliente, clientes_df)
-    guardar_pedido(cliente, articulo, cantidad)  
+    precio = articulos_df.loc[articulos_df["Articulo"] == articulo, "Precio"].values[0]
+    df_pedido = guardar_pedido(cliente, articulo, cantidad)  
+    pedido_num = f"pedido-{cliente}-{date.today()}.csv"
     print("Pedido cargado con éxito.")
+
+    i = input(
+"""
+Desea mandar un recibo por mail?
+1. Si
+2. No
+Indique su elección: """
+)
+    if i == "1":
+        email_sender = "netudabbah@gmail.com"
+        email_pass = "dgyd zxlr jnif poxj"
+        email_receiver = clientes_df.loc[clientes_df["Cliente"] == cliente, "Mail"].values[0]
+        subject = "Pedido Nº 0358. Randerscraw, Inc."
+        pedido_data = {'Articulo': [articulo], 'Cantidad': [cantidad], 'Precio': [precio]}
+        df_pedido = pd.DataFrame(pedido_data)
+        df_pedido.to_csv(pedido_num, index=False)
+        body = f"""
+Recibo de compra del dia: {date.today()} 
+
+{tabulate(df_pedido, headers="keys", tablefmt="pretty", showindex="never", colalign=("center", "center", "center"))}
+
+Precio final: {precio} ({num2words(precio, lang="es", to='currency', separator=' y', currency='ARS')})
+Gracias por comprar en Randerscraw, Inc. 
+Facturado por emsuit
+"""
+        print("Enviando mail...")
+        mail(email_sender, email_pass, email_receiver, subject, body)
+        print(f"Mail enviado con éxito a: {email_receiver}")
+    else:
+        print(f"Se guardó sin enviar. El archivo es: {pedido_num}")
 
 def restar_cantidad(articulos_df, articulo, cantidad):
     articulos_df.loc[articulos_df["Articulo"] == articulo, "Cantidad"] -= cantidad
@@ -397,7 +554,7 @@ def guardar_pedido(cliente, articulo, cantidad):
         df_pedido.to_csv('pedidos.csv', index=False)
     else:
         df_pedido.to_csv('pedidos.csv', mode='a', header=False, index=False)
-
+    return df_pedido
 
 def gestionar_articulos(articulos_df, solo_articulos, lista_articulos):
     print("\n\033[92mGestionar articulos\033[0m\n")
@@ -542,7 +699,6 @@ Su eleccion: """
     print("Lista de articulos actualizada: ")
     mostra_c(art=articulos_df)
 
-            
 def editar_nombre_a(articulos_df, viejo, nuevo):
     articulos_df.loc[articulos_df["Articulo"] == viejo, "Articulo"] = nuevo
     articulos_df.to_csv("productos.csv", index=False)
@@ -566,7 +722,6 @@ def editar_observacion_a(articulos_df, articulo, obs):
 def eliminar_a(articulos_df, articulo): 
     articulos_df = articulos_df[articulos_df["Articulo"] != articulo]
     articulos_df.to_csv("productos.csv", index=False)
-
 
 def pedir_articulo(articulo=None):
     if articulo == None:
@@ -612,7 +767,6 @@ def agregar_articulo(articulos_df, articulo, cantidad, costo, precio_final, obse
     combino = pd.concat([articulos_df_clean, data], ignore_index=True)
     combino.to_csv("productos.csv", index=False)
 
-
 def activador_c(df):
     lista_clientes = df.loc[:]
     solo_clientes = df.loc[:, ["Cliente"]].values
@@ -623,6 +777,18 @@ def activador_a(df):
     solo_articulos = df.loc[:, ["Articulo"]].values
     return lista_articulos, solo_articulos
 
+def mail(email_sender, email_pass, email_receiver, subject, body):
+    em = EmailMessage()
+    em["From"] = email_sender
+    em["To"] = email_receiver
+    em["Subject"] = subject
+    em.set_content(body)
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
+        smtp.login(email_sender, email_pass)
+        smtp.sendmail(email_sender, email_receiver, em.as_string())
+
 if __name__ == "__main__":
     main()
-
